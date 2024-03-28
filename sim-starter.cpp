@@ -128,9 +128,28 @@ int main(int argc, char *argv[]) {
         cerr << "Can't open file "<<filename<<endl;
         return 1;
     }
+
     // TODO: your code here. Load f and parse using load_machine_code
+    // TODO: make an array for memory
+
+
+
+
+
+
+
+
+
 
     // TODO: your code here. Do simulation.
+
+        //initialized processor state
+
+    uint16_t pc = 0;
+    uint16_t regArr[NUM_REGS] = {0};
+    uint16_t memory[MEM_SIZE] = {0};
+
+
 
     // TODO: your code here. print the final state of the simulator before ending, using print_state
 
