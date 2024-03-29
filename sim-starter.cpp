@@ -13,13 +13,15 @@ sim.cpp
 #include <iomanip>
 #include <regex>
 #include <cstdlib>
+//#include <gay>
+#include <bitset>
 
 using namespace std;
 
 // Some helpful constant values that we'll be using.
 size_t const static NUM_REGS = 8;
-size_t const static MEM_SIZE = 1<<13;
-size_t const static REG_SIZE = 1<<16;
+size_t const static MEM_SIZE = 1 << 13;
+//size_t const static REG_SIZE = 1<<16;
 
 /*
     Loads an E20 machine code file into the list
@@ -30,7 +32,7 @@ size_t const static REG_SIZE = 1<<16;
     @param f Open file to read from
     @param mem Array represetnting memory into which to read program
 */
-void load_machine_code(ifstream &f, unsigned mem[]) {
+void load_machine_code(ifstream& f, uint16_t mem[]) {
     regex machine_code_re("^ram\\[(\\d+)\\] = 16'b(\\d+);.*$");
     size_t expectedaddr = 0;
     string line;
@@ -50,7 +52,7 @@ void load_machine_code(ifstream &f, unsigned mem[]) {
             cerr << "Program too big for memory" << endl;
             exit(1);
         }
-        expectedaddr ++;
+        expectedaddr++;
         mem[addr] = instr;
     }
 }
@@ -65,17 +67,17 @@ void load_machine_code(ifstream &f, unsigned mem[]) {
     @param memory Final value of memory
     @param memquantity How many words of memory to dump
 */
-void print_state(unsigned pc, unsigned regs[], unsigned memory[], size_t memquantity) {
+void print_state(uint16_t pc, uint16_t regs[], uint16_t memory[], size_t memquantity) {
     cout << setfill(' ');
     cout << "Final state:" << endl;
-    cout << "\tpc=" <<setw(5)<< pc << endl;
+    cout << "\tpc=" << setw(5) << pc << endl;
 
-    for (size_t reg=0; reg<NUM_REGS; reg++)
-        cout << "\t$" << reg << "="<<setw(5)<<regs[reg]<<endl;
+    for (size_t reg = 0; reg < NUM_REGS; reg++)
+        cout << "\t$" << reg << "=" << setw(5) << regs[reg] << endl;
 
     cout << setfill('0');
     bool cr = false;
-    for (size_t count=0; count<memquantity; count++) {
+    for (size_t count = 0; count < memquantity; count++) {
         cout << hex << setw(4) << memory[count] << " ";
         cr = true;
         if (count % 8 == 7) {
@@ -87,21 +89,43 @@ void print_state(unsigned pc, unsigned regs[], unsigned memory[], size_t memquan
         cout << endl;
 }
 
+void sim(uint16_t pc, uint16_t regs[], uint16_t memory[]) {
+    uint16_t curr_ins = memory[pc + 10];
+
+    uint16_t imm13 = (curr_ins << 3) >> 3;
+    uint8_t opCode = curr_ins >> 13;
+    uint8_t rA = (curr_ins >> 10) & 7;
+    uint8_t rB = (curr_ins >> 7) & 7;
+    uint8_t rC = (curr_ins >> 4) & 7;
+    uint8_t func = curr_ins & 15;
+
+
+    cout << "opCode: " << bitset<3>(opCode) << endl;
+    cout << "imm13: " << bitset<13>(imm13) << endl;
+    cout << "rA: " << bitset<3>(rA) << endl;
+    cout << "rB: " << bitset<3>(rB) << endl;
+    cout << "rC: " << bitset<3>(rC) << endl;
+    cout << "func: " << bitset<4>(func) << endl;
+    cout << "full ins: " << bitset<16>(curr_ins) << endl;
+
+}
+
+
 /**
     Main function
     Takes command-line args as documented below
 */
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     /*
         Parse the command-line arguments
     */
-    char *filename = nullptr;
+    char* filename = nullptr;
     bool do_help = false;
     bool arg_error = false;
-    for (int i=1; i<argc; i++) {
+    for (int i = 1; i < argc; i++) {
         string arg(argv[i]);
-        if (arg.rfind("-",0)==0) {
-            if (arg== "-h" || arg == "--help")
+        if (arg.rfind("-", 0) == 0) {
+            if (arg == "-h" || arg == "--help")
                 do_help = true;
             else
                 arg_error = true;
@@ -117,41 +141,40 @@ int main(int argc, char *argv[]) {
         cerr << "usage " << argv[0] << " [-h] filename" << endl << endl;
         cerr << "Simulate E20 machine" << endl << endl;
         cerr << "positional arguments:" << endl;
-        cerr << "  filename    The file containing machine code, typically with .bin suffix" << endl<<endl;
-        cerr << "optional arguments:"<<endl;
-        cerr << "  -h, --help  show this help message and exit"<<endl;
+        cerr << "  filename    The file containing machine code, typically with .bin suffix" << endl << endl;
+        cerr << "optional arguments:" << endl;
+        cerr << "  -h, --help  show this help message and exit" << endl;
         return 1;
     }
 
     ifstream f(filename);
     if (!f.is_open()) {
-        cerr << "Can't open file "<<filename<<endl;
+        cerr << "Can't open file " << filename << endl;
         return 1;
     }
 
     // TODO: your code here. Load f and parse using load_machine_code
-    // TODO: make an array for memory
+    //initialized processor state
 
+    uint16_t pc = 0;
+    uint16_t regArr[NUM_REGS] = {0};
+    uint16_t mem[MEM_SIZE] = {0};
 
-
-
-
-
-
+    load_machine_code(f, mem);
 
 
 
     // TODO: your code here. Do simulation.
 
-        //initialized processor state
+    sim(pc, regArr, mem);
 
-    uint16_t pc = 0;
-    uint16_t regArr[NUM_REGS] = {0};
-    uint16_t memory[MEM_SIZE] = {0};
+
+
 
 
 
     // TODO: your code here. print the final state of the simulator before ending, using print_state
+//    print_state(pc,regArr,mem,128);
 
     return 0;
 }
