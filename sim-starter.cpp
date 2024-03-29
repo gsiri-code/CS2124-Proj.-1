@@ -89,8 +89,8 @@ void print_state(uint16_t pc, uint16_t regs[], uint16_t memory[], size_t memquan
         cout << endl;
 }
 
-void sim(uint16_t& pc, uint16_t regs[], uint16_t memory[]) {
-    uint16_t curr_ins = memory[pc + 3];
+void sim(uint16_t& pc, uint16_t regs[], uint16_t mem[]) {
+    uint16_t curr_ins = mem[pc];
 
     //Params
 
@@ -113,28 +113,28 @@ void sim(uint16_t& pc, uint16_t regs[], uint16_t memory[]) {
 
 
     // three reg instructions (add, sub, or, and, slt, jr)
-    if (opCode == 0){
-        if(func == 0){
+    if (opCode == 0) {
+        if (func == 0) {
             // add
             regs[rC] = regs[rA] + regs[rB];
-        } else if (func == 1){
+        } else if (func == 1) {
             // sub
             regs[rC] = regs[rA] - regs[rB];
-        }else if (func == 2){
+        } else if (func == 2) {
             // or
             regs[rC] = regs[rA] | regs[rB];
-        }else if (func == 3){
+        } else if (func == 3) {
             //and
             regs[rC] = regs[rA] & regs[rB];
-        }else if (func == 4){
+        } else if (func == 4) {
             //slt
             regs[rC] = (regs[rA] < regs[rB]) ? 1 : 0;
-        }else if (func == 5){
+        } else if (func == 5) {
             // jr
             pc = regs[rA];
         }
         if (func != 5) pc += 1; //increment pc counter by 1
-    }else{
+    } else {
         // Two reg instructions
         /*
             addi: Opcode 001 (1 in decimal).
@@ -145,7 +145,34 @@ void sim(uint16_t& pc, uint16_t regs[], uint16_t memory[]) {
             jeq: Opcode 110 (6 in decimal).
             slti: Opcode 111 (7 in decimal).
          */
-        if(opCode == 1)
+        if (opCode == 1) {
+            // addi
+            regs[rB] = regs[rA] + imm13;
+            pc += 1;
+        } else if (opCode == 2) {
+            // j
+            pc = imm13;
+        } else if (opCode == 3) {
+            // jal
+            regs[7] = pc + 1;
+            pc = imm13;
+        } else if (opCode == 4) {
+            // lw
+            regs[rB] = mem[regs[rA] + imm13];
+            pc += 1;
+        } else if (opCode == 5) {
+            // sw
+            mem[regs[rA] + imm13] = regs[rB];
+            pc += 1;
+        } else if (opCode == 6) {
+            // jeq
+            int rel_imm = imm13 - pc - 1;
+            pc = (regs[rA] == regs[rB]) ? rel_imm : 1;
+        } else if (opCode == 7) {
+            // slti
+            regs[rB] = regs[rA] + imm13;
+            pc += 1;
+        }
     }
 
 
@@ -215,7 +242,7 @@ int main(int argc, char* argv[]) {
 
 
     // TODO: your code here. print the final state of the simulator before ending, using print_state
-    print_state(pc,regArr,mem,128);
+    print_state(pc, regArr, mem, 128);
 
     return 0;
 }
