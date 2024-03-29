@@ -89,24 +89,65 @@ void print_state(uint16_t pc, uint16_t regs[], uint16_t memory[], size_t memquan
         cout << endl;
 }
 
-void sim(uint16_t pc, uint16_t regs[], uint16_t memory[]) {
-    uint16_t curr_ins = memory[pc + 10];
+void sim(uint16_t& pc, uint16_t regs[], uint16_t memory[]) {
+    uint16_t curr_ins = memory[pc + 3];
 
-    uint16_t imm13 = (curr_ins << 3) >> 3;
+    //Params
+
     uint8_t opCode = curr_ins >> 13;
+    //registers
     uint8_t rA = (curr_ins >> 10) & 7;
     uint8_t rB = (curr_ins >> 7) & 7;
     uint8_t rC = (curr_ins >> 4) & 7;
+
+    uint16_t imm13 = (curr_ins << 3) >> 3;
     uint8_t func = curr_ins & 15;
 
-
-    cout << "opCode: " << bitset<3>(opCode) << endl;
-    cout << "imm13: " << bitset<13>(imm13) << endl;
-    cout << "rA: " << bitset<3>(rA) << endl;
-    cout << "rB: " << bitset<3>(rB) << endl;
-    cout << "rC: " << bitset<3>(rC) << endl;
-    cout << "func: " << bitset<4>(func) << endl;
     cout << "full ins: " << bitset<16>(curr_ins) << endl;
+    cout << "\topCode: " << bitset<3>(opCode) << endl;
+    cout << "\timm13: " << bitset<13>(imm13) << endl;
+    cout << "\trA: " << bitset<3>(rA) << endl;
+    cout << "\trB: " << bitset<3>(rB) << endl;
+    cout << "\trC: " << bitset<3>(rC) << endl;
+    cout << "\tfunc: " << bitset<4>(func) << endl;
+
+
+    // three reg instructions (add, sub, or, and, slt, jr)
+    if (opCode == 0){
+        if(func == 0){
+            // add
+            regs[rC] = regs[rA] + regs[rB];
+        } else if (func == 1){
+            // sub
+            regs[rC] = regs[rA] - regs[rB];
+        }else if (func == 2){
+            // or
+            regs[rC] = regs[rA] | regs[rB];
+        }else if (func == 3){
+            //and
+            regs[rC] = regs[rA] & regs[rB];
+        }else if (func == 4){
+            //slt
+            regs[rC] = (regs[rA] < regs[rB]) ? 1 : 0;
+        }else if (func == 5){
+            // jr
+            pc = regs[rA];
+        }
+        if (func != 5) pc += 1; //increment pc counter by 1
+    }else{
+        // Two reg instructions
+        /*
+            addi: Opcode 001 (1 in decimal).
+            j: Opcode 010 (2 in decimal).
+            jal: Opcode 011 (3 in decimal).
+            lw: Opcode 100 (4 in decimal).
+            sw: Opcode 101 (5 in decimal).
+            jeq: Opcode 110 (6 in decimal).
+            slti: Opcode 111 (7 in decimal).
+         */
+        if(opCode == 1)
+    }
+
 
 }
 
@@ -174,7 +215,7 @@ int main(int argc, char* argv[]) {
 
 
     // TODO: your code here. print the final state of the simulator before ending, using print_state
-//    print_state(pc,regArr,mem,128);
+    print_state(pc,regArr,mem,128);
 
     return 0;
 }
