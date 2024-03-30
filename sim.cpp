@@ -90,32 +90,52 @@ void print_state(uint16_t pc, uint16_t regs[], const uint16_t memory[], const si
 }
 
 void sim(uint16_t& pc, uint16_t regs[], uint16_t mem[]) {
+
     bool halt = false;
     while (!halt) {
-        uint16_t curr_ins = mem[pc];
+        cout << "Begining Iteration --------------------------------------------" << endl;
+        uint16_t curr_ins = mem[pc & 8191];
 
         //Params
-
         uint8_t opCode = curr_ins >> 13;
         //registers
         uint8_t rA = (curr_ins >> 10) & 7;
         uint8_t rB = (curr_ins >> 7) & 7;
+
+
         uint8_t rC = (curr_ins >> 4) & 7;
+        uint8_t func = curr_ins & 15;
 
         uint16_t imm7 = curr_ins & 127;
         if (imm7 & 0x0040) {
             imm7 |= 0xFF80; // 0xFF80 is 11111111 10000000 in binary
         }
         uint16_t imm13 = curr_ins & 0x1FFF;
-        uint8_t func = curr_ins & 15;
+        uint16_t new_pc = pc + 1;
 
+        cout << "\tpc: " << pc << endl;
+
+//        cout << "full ins: " << bitset<16>(curr_ins) << endl;
+//        cout << "\topCode: " << bitset<3>(opCode) << endl;
+//        cout << "\timm13: " << bitset<16>(imm13) << endl;
+//        cout << "\timm7: " << bitset<7>(imm7) << endl;
+        cout << "\tRegisterA: " << (regs[rA]) << endl;
+        cout << "\tRegisterB: " << (regs[rB]) << endl;
+        cout << "\tRegisterC: " << (regs[rC]) << endl;
+
+
+
+//        cout << "\trA: " << bitset<3>(rA) << endl;
+//        cout << "\trB: " << bitset<3>(rB) << endl;
+//        cout << "\trC: " << bitset<3>(rC) << endl;
+//        cout << "\tfunc: " << bitset<4>(func) << endl;
 
         // three reg instructions (add, sub, or, and, slt, jr)
-        if (opCode == 0) {
-            if (func == 0) {
+        if (opCode == 0b000) {
+            if (func == 0b0000) {
                 // add
                 regs[rC] = regs[rA] + regs[rB];
-            } else if (func == 1) {
+            } else if (func == 0b0001) {
                 // sub
                 regs[rC] = regs[rA] - regs[rB];
             } else if (func == 2) {
@@ -129,48 +149,47 @@ void sim(uint16_t& pc, uint16_t regs[], uint16_t mem[]) {
                 regs[rC] = (regs[rA] < regs[rB]) ? 1 : 0;
             } else if (func == 5) {
                 // jr
-                pc = regs[rA];
+                new_pc = regs[rA];
             }
-            if (func != 5) pc += 1; //increment pc counter by 1
         } else {
             // Two reg instructions
             if (opCode == 1) {
                 // addi
-                if (rB != 0) regs[rB] = regs[rA] + imm7;
-                pc += 1;
+                regs[rB] = regs[rA] + imm7;
             } else if (opCode == 2) {
                 // j
-                if (pc == imm13) halt = true;
-                else pc = imm13;
+                new_pc = imm13;
             } else if (opCode == 3) {
                 // jal
                 regs[7] = pc + 1;
-                pc = imm13;
+                new_pc = imm13;
             } else if (opCode == 4) {
                 // lw
                 if (rB != 0) regs[rB] = mem[regs[rA] + imm7];
-                pc += 1;
             } else if (opCode == 5) {
                 // sw
                 mem[regs[rA] + imm7] = regs[rB];
-                pc += 1;
             } else if (opCode == 6) {
                 // jeq
-                int rel_imm = imm7 - pc - 1;
-                if (regs[rA] == regs[rB]) pc = pc + 1 + imm7;
-                else pc += 1;
+                if (regs[rA] == regs[rB]) new_pc = pc+1+imm7;
 
             } else if (opCode == 7) {
                 // slti
-                regs[rB] = regs[rA] < imm13;
-                pc += 1;
+                regs[rB] = regs[rA] < imm7;
             }
         }
-        pc &= 0x1FFF;
-
+        //TODO: add a flag to check if pc coutner same, if same then halt, else update pc
+        if (pc == new_pc){
+            halt = true;
+            cout << "HALT" <<endl;
+        }else { pc = new_pc;}
+        regs[0] = 0;
+        cout << "After Iteration--------------------------------------------" << endl;
+        cout << "\tpc: " << pc << endl;
+        cout << "\tRegisterA: " << (regs[rA]) << endl;
+        cout << "\tRegisterB: " << (regs[rB]) << endl;
+        cout << "\tRegisterC: " << (regs[rC]) << endl;
     }
-
-
 }
 
 
@@ -231,4 +250,3 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-//ra0Eequ6ucie6Jei0koh6phishohm9
