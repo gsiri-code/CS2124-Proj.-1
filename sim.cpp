@@ -13,8 +13,6 @@ sim.cpp
 #include <iomanip>
 #include <regex>
 #include <cstdlib>
-//#include <gay>
-#include <bitset>
 
 using namespace std;
 
@@ -90,10 +88,9 @@ void print_state(uint16_t pc, uint16_t regs[], const uint16_t memory[], const si
 }
 
 void sim(uint16_t& pc, uint16_t regs[], uint16_t mem[]) {
-
     bool halt = false;
+
     while (!halt) {
-        cout << "Begining Iteration --------------------------------------------" << endl;
         uint16_t curr_ins = mem[pc & 8191];
 
         //Params
@@ -107,88 +104,64 @@ void sim(uint16_t& pc, uint16_t regs[], uint16_t mem[]) {
         uint8_t func = curr_ins & 15;
 
         uint16_t imm7 = curr_ins & 127;
-        if (imm7 & 0x0040) {
-            imm7 |= 0xFF80; // 0xFF80 is 11111111 10000000 in binary
-        }
+        if (imm7 & 0x0040) imm7 |= 0xFF80; // sign extend 7 if its negative
+
         uint16_t imm13 = curr_ins & 0x1FFF;
         uint16_t new_pc = pc + 1;
 
-        cout << "\tpc: " << pc << endl;
-
-//        cout << "full ins: " << bitset<16>(curr_ins) << endl;
-//        cout << "\topCode: " << bitset<3>(opCode) << endl;
-//        cout << "\timm13: " << bitset<16>(imm13) << endl;
-//        cout << "\timm7: " << bitset<7>(imm7) << endl;
-        cout << "\tRegisterA: " << (regs[rA]) << endl;
-        cout << "\tRegisterB: " << (regs[rB]) << endl;
-        cout << "\tRegisterC: " << (regs[rC]) << endl;
-
-
-
-//        cout << "\trA: " << bitset<3>(rA) << endl;
-//        cout << "\trB: " << bitset<3>(rB) << endl;
-//        cout << "\trC: " << bitset<3>(rC) << endl;
-//        cout << "\tfunc: " << bitset<4>(func) << endl;
-
-        // three reg instructions (add, sub, or, and, slt, jr)
-        if (opCode == 0b000) {
+        if (opCode == 0b000) { // three reg instructions (add, sub, or, and, slt, jr)
             if (func == 0b0000) {
                 // add
                 regs[rC] = regs[rA] + regs[rB];
             } else if (func == 0b0001) {
                 // sub
                 regs[rC] = regs[rA] - regs[rB];
-            } else if (func == 2) {
+            } else if (func == 0b0010) {
                 // or
                 regs[rC] = regs[rA] | regs[rB];
-            } else if (func == 3) {
+            } else if (func == 0b0011) {
                 //and
                 regs[rC] = regs[rA] & regs[rB];
-            } else if (func == 4) {
+            } else if (func == 0b0100) {
                 //slt
                 regs[rC] = (regs[rA] < regs[rB]) ? 1 : 0;
-            } else if (func == 5) {
+            } else if (func == 0b0101) {
                 // jr
                 new_pc = regs[rA];
             }
         } else {
             // Two reg instructions
-            if (opCode == 1) {
+            if (opCode == 0b0001) {
                 // addi
                 regs[rB] = regs[rA] + imm7;
-            } else if (opCode == 2) {
+            } else if (opCode == 0b0010) {
                 // j
                 new_pc = imm13;
-            } else if (opCode == 3) {
+            } else if (opCode == 0b0011) {
                 // jal
                 regs[7] = pc + 1;
                 new_pc = imm13;
-            } else if (opCode == 4) {
+            } else if (opCode == 0b0100) {
                 // lw
                 if (rB != 0) regs[rB] = mem[regs[rA] + imm7];
-            } else if (opCode == 5) {
+            } else if (opCode == 0b0101) {
                 // sw
                 mem[regs[rA] + imm7] = regs[rB];
-            } else if (opCode == 6) {
+            } else if (opCode == 0b0110) {
                 // jeq
-                if (regs[rA] == regs[rB]) new_pc = pc+1+imm7;
+                if (regs[rA] == regs[rB]) {
+                    new_pc = pc + 1 + imm7;
+                }
 
-            } else if (opCode == 7) {
+            } else if (opCode == 0b0111) {
                 // slti
                 regs[rB] = regs[rA] < imm7;
             }
         }
-        //TODO: add a flag to check if pc coutner same, if same then halt, else update pc
         if (pc == new_pc){
             halt = true;
-            cout << "HALT" <<endl;
         }else { pc = new_pc;}
         regs[0] = 0;
-        cout << "After Iteration--------------------------------------------" << endl;
-        cout << "\tpc: " << pc << endl;
-        cout << "\tRegisterA: " << (regs[rA]) << endl;
-        cout << "\tRegisterB: " << (regs[rB]) << endl;
-        cout << "\tRegisterC: " << (regs[rC]) << endl;
     }
 }
 
