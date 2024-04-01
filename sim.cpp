@@ -60,7 +60,7 @@ void load_machine_code(ifstream& f, uint16_t mem[]) {
     the current program counter, the current register values,
     and the first memquantity elements of memory.
 
-    @param pc The final value of the program counter
+    @param pc The final value ofx the program counter
     @param regs Final value of all registers
     @param memory Final value of memory
     @param memquantity How many words of memory to dump
@@ -87,80 +87,79 @@ void print_state(uint16_t pc, uint16_t regs[], const uint16_t memory[], const si
         cout << endl;
 }
 
+
+/*
+ Simulates E20
+ */
 void sim(uint16_t& pc, uint16_t regs[], uint16_t mem[]) {
-    bool halt = false;
 
-    while (!halt) {
-        uint16_t curr_ins = mem[pc & 8191];
+    bool halt = false; //Set a flag for halt instruction
 
-        //Params
-        uint8_t opCode = curr_ins >> 13;
-        //registers
-        uint8_t rA = (curr_ins >> 10) & 7;
-        uint8_t rB = (curr_ins >> 7) & 7;
+    while (!halt) { //Continue to run until halt is flagged
+        //Access Memory at current Program Counter
 
+        uint16_t curr_ins = mem[pc & 8191]; //Read only 13 bits of pc
 
-        uint8_t rC = (curr_ins >> 4) & 7;
-        uint8_t func = curr_ins & 15;
+        //Breakdown Current Instruction
 
+            //Control parameters
+        uint16_t opCode = curr_ins >> 13;
+        uint16_t func = curr_ins & 15;
+
+            //Registers
+        uint16_t rA = (curr_ins >> 10) & 7;
+        uint16_t rB = (curr_ins >> 7) & 7;
+        uint16_t rC = (curr_ins >> 4) & 7;
+
+            //Immediate Values
         uint16_t imm7 = curr_ins & 127;
-        if (imm7 & 0x0040) imm7 |= 0xFF80; // sign extend 7 if its negative
+        if (imm7 & 0x0040) imm7 |= 0xFF80; // Sign extend 7 if its negative
+        uint16_t imm13 = curr_ins & 0x1FFF; // Zero extend imm13
 
-        uint16_t imm13 = curr_ins & 0x1FFF;
+        //Defaulted increment of Program counter
         uint16_t new_pc = pc + 1;
 
-        if (opCode == 0b000) { // three reg instructions (add, sub, or, and, slt, jr)
-            if (func == 0b0000) {
-                // add
-                regs[rC] = regs[rA] + regs[rB];
-            } else if (func == 0b0001) {
-                // sub
-                regs[rC] = regs[rA] - regs[rB];
-            } else if (func == 0b0010) {
-                // or
-                regs[rC] = regs[rA] | regs[rB];
-            } else if (func == 0b0011) {
-                //and
-                regs[rC] = regs[rA] & regs[rB];
-            } else if (func == 0b0100) {
-                //slt
-                regs[rC] = (regs[rA] < regs[rB]) ? 1 : 0;
-            } else if (func == 0b0101) {
-                // jr
-                new_pc = regs[rA];
-            }
+        if (opCode == 0b000) {
+            // Three reg instructions (add, sub, or, and, slt, jr)
+            if (func == 0b0000) regs[rC] = regs[rA] + regs[rB]; //add
+
+            else if (func == 0b0001) regs[rC] = regs[rA] - regs[rB]; // sub
+
+            else if (func == 0b0010) regs[rC] = regs[rA] | regs[rB]; // or
+
+            else if (func == 0b0011) regs[rC] = regs[rA] & regs[rB]; // and
+
+            else if (func == 0b0100) regs[rC] = (regs[rA] < regs[rB]) ? 1 : 0; //slt
+
+            else if (func == 0b1000) new_pc = regs[rA]; // jr
+
         } else {
             // Two reg instructions
-            if (opCode == 0b0001) {
-                // addi
-                regs[rB] = regs[rA] + imm7;
-            } else if (opCode == 0b0010) {
-                // j
-                new_pc = imm13;
-            } else if (opCode == 0b0011) {
-                // jal
+            if (opCode == 0b001) regs[rB] = regs[rA] + imm7;// addi
+
+            else if (opCode == 0b010) new_pc = imm13; //j
+
+            else if (opCode == 0b100) regs[rB] = mem[(regs[rA] + imm7) & 8191];// lw
+
+            else if (opCode == 0b101) mem[(regs[rA] + imm7) & 8191] = regs[rB];// sw
+
+            else if (opCode == 0b110) new_pc = regs[rA] == regs[rB] ? (pc + 1 + imm7) : pc + 1;// jeq
+
+            else if (opCode == 0b111) regs[rB] = regs[rA] < imm7;// slti
+
+            else if (opCode == 0b011) { // jal
                 regs[7] = pc + 1;
                 new_pc = imm13;
-            } else if (opCode == 0b0100) {
-                // lw
-                if (rB != 0) regs[rB] = mem[regs[rA] + imm7];
-            } else if (opCode == 0b0101) {
-                // sw
-                mem[regs[rA] + imm7] = regs[rB];
-            } else if (opCode == 0b0110) {
-                // jeq
-                if (regs[rA] == regs[rB]) {
-                    new_pc = pc + 1 + imm7;
-                }
-
-            } else if (opCode == 0b0111) {
-                // slti
-                regs[rB] = regs[rA] < imm7;
             }
         }
-        if (pc == new_pc){
-            halt = true;
-        }else { pc = new_pc;}
+
+        //Check for halt condition
+        halt = (pc & 8191) == new_pc;
+
+        // Update Program counter, if halt is false
+        if (!halt) pc = new_pc;
+
+        // Reset Rg0
         regs[0] = 0;
     }
 }
