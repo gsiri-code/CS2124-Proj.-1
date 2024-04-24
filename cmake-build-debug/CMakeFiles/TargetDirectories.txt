@@ -1,0 +1,3 @@
+/Users/iminthecoupwiththecutta/Desktop/cmp_arch_proj/cmake-build-debug/CMakeFiles/cmp_arch_proj.dir
+/Users/iminthecoupwiththecutta/Desktop/cmp_arch_proj/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/iminthecoupwiththecutta/Desktop/cmp_arch_proj/cmake-build-debug/CMakeFiles/rebuild_cache.dir
