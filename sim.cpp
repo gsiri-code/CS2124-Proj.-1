@@ -139,7 +139,12 @@ void sim(uint16_t& pc, uint16_t regs[], uint16_t mem[]) {
 
             else if (opCode == 0b010) new_pc = imm13; //j
 
-            else if (opCode == 0b100) regs[rB] = mem[(regs[rA] + imm7) & 8191];// lw
+            else if (opCode == 0b100) {
+                uint16_t read_pc = (regs[rA] + imm7) & 8191;
+                cout << "imm: "  << read_pc << endl;
+                regs[rB] = mem[read_pc];
+                cout<< "reg:" << rB << " = " << regs[rB] << endl;
+            }// lw
 
             else if (opCode == 0b101) mem[(regs[rA] + imm7) & 8191] = regs[rB];// sw
 
